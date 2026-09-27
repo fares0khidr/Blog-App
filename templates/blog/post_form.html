@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if post %}Edit post{% else %}New post{% endif %}{% endblock %}
+
+{% block content %}
+    <section class="form-layout">
+        <div class="hero">
+            <p class="eyebrow">Your next entry</p>
+            <h1>{% if post %}Edit post{% else %}New post{% endif %}</h1>
+            <p class="lede">Shape the idea now. You can keep it as a draft or publish it when it is ready.</p>
+        </div>
+        <div class="form-panel">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+                <div class="form-row">{{ form.title.label_tag }}{{ form.title }}{{ form.title.errors }}</div>
+                <div class="form-row">{{ form.category.label_tag }}{{ form.category }}{{ form.category.errors }}</div>
+                <div class="form-row">{{ form.tags.label_tag }}{{ form.tags }}{{ form.tags.errors }}</div>
+                <div class="form-row">{{ form.content.label_tag }}{{ form.content }}{{ form.content.errors }}</div>
+                <div class="form-row"><label>{{ form.published }} Publish immediately</label>{{ form.published.errors }}</div>
+                <div class="form-actions"><button type="submit">Save post</button><a class="text-link" href="{% url 'my-posts' %}">Cancel</a></div>
+            </form>
+        </div>
+    </section>
+{% endblock %}
