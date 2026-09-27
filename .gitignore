@@ -42,3 +42,6 @@ htmlcov/
 *.log
 
 .vscode/
+
+# Local design files - not committed
+docs/design/
