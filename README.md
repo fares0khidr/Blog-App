@@ -102,8 +102,6 @@ blogapp/
 └── db.sqlite3                Local database, ignored by Git
 ```
 
-The local `figma/`, `figma-designs/`, and `docs/design/` folders are visual reference material and are ignored by Git. They are not required to run the application.
-
 ## Verification
 
 Run these checks before pushing:
