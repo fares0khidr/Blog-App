@@ -35,7 +35,6 @@ TheBlog is a multi-user blog platform built with Django. Visitors can browse pub
 Run these commands from the project root in an activated Python environment:
 
 ```cmd
-conda activate djangounchainted
 python -m pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
