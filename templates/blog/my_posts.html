@@ -1,45 +1,12 @@
-{% extends 'base.html' %}
-
-{% block title %}My posts{% endblock %}
-
+{% extends "base.html" %}
+{% block title %}My posts · TheBlog{% endblock %}
+{% block body_class %}bg-soft{% endblock %}
 {% block content %}
-    <div class="dashboard-head">
-        <div>
-            <p class="eyebrow">Your writing space</p>
-            <h1>My posts</h1>
-            <p class="lede">Keep drafts close, and share your finished ideas when they are ready.</p>
-        </div>
-        <a class="button" href="{% url 'post-create' %}">New post <span aria-hidden="true">+</span></a>
-    </div>
-
-    {% if posts %}
-        <div class="posts-table-wrap">
-            <table class="posts-table">
-                <thead>
-                    <tr><th>Post</th><th>Status</th><th>Category</th><th>Created</th><th>Actions</th></tr>
-                </thead>
-                <tbody>
-                    {% for post in posts %}
-                        <tr>
-                            <td><strong>{{ post.title }}</strong></td>
-                            <td><span class="status {% if post.published %}status-published{% else %}status-draft{% endif %}">{% if post.published %}Published{% else %}Draft{% endif %}</span></td>
-                            <td>{{ post.category.name|default:"—" }}</td>
-                            <td class="meta">{{ post.created_at|date:"M j, Y" }}</td>
-                            <td class="action-links"><a class="text-link" href="{% url 'post-update' post.pk %}">Edit</a><a class="text-link" href="{% url 'post-delete' post.pk %}">Delete</a></td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% else %}
-        <div class="empty-state"><h2>No posts yet.</h2><p class="post-excerpt">Start with a first draft.</p></div>
-    {% endif %}
-
-    {% if is_paginated %}
-        <nav class="pagination" aria-label="My post pages">
-            {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
-            <span class="meta">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-            {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Next</a>{% endif %}
-        </nav>
-    {% endif %}
+<main class="page">
+  <div class="page-head"><div><h1>My posts</h1><p class="subtitle">{{ posts|length }} post{{ posts|length|pluralize }} · {{ draft_count }} draft{{ draft_count|pluralize }}</p></div><a class="btn btn--primary" href="{% url 'post-create' %}">New post</a></div>
+  <div class="table-card"><table><thead><tr><th>Title</th><th>Category</th><th>Status</th><th>Updated</th><th></th></tr></thead><tbody>
+    {% for post in posts %}<tr><td class="title">{{ post.title }}</td><td>{{ post.category.name|default:"" }}</td><td>{% if post.published %}<span class="badge badge--pub">Published</span>{% else %}<span class="badge badge--draft">Draft</span>{% endif %}</td><td>{{ post.updated_at|date:"M j, Y" }}</td><td class="actions"><a class="btn btn--outline btn--sm" href="{% url 'post-update' post.pk %}">Edit</a><form method="post" action="{% url 'post-delete' post.pk %}" onsubmit="return confirm('Delete this post?')">{% csrf_token %}<button class="btn btn--outline btn--sm btn--danger" type="submit">Delete</button></form></td></tr>
+    {% empty %}<tr><td colspan="5">You haven't written anything yet.</td></tr>{% endfor %}
+  </tbody></table></div>
+</main>
 {% endblock %}

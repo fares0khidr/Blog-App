@@ -1,263 +1,99 @@
-# Blog Platform Architecture
+# Architecture
 
-## 1. Architecture Overview
+## Overview
 
-The application will use Django as a monolithic web framework with
-server-rendered Django Templates.
+TheBlog is a small Django monolith. Django owns URL routing, authentication, authorization, form validation, ORM access, template rendering, and static-file integration. The application is intentionally server-rendered: there is no separate frontend service or API layer.
 
-The initial architecture consists of:
-
-- Django
-- Django Templates
-- Django ORM
-- Django Authentication
-- SQLite
-
-The frontend implementation will be developed after the provided Figma
-design is available.
-
----
-
-## 2. High-Level Request Flow
-
-A typical request follows this flow:
-
+```text
 Browser
-    ↓
-Django URL routing
-    ↓
-View
-    ↓
-Forms / Authentication / ORM
-    ↓
-Database
-    ↓
-View
-    ↓
-Django Template
-    ↓
-HTML response
-    ↓
-Browser
+  -> config.urls -> blog.urls
+  -> class-based view
+  -> form and/or authenticated request
+  -> Django ORM
+  -> SQLite (development)
+  -> template + static CSS
+  -> HTML response
+```
 
----
+This structure keeps the ownership and security rules close to the data access that enforces them.
 
-## 3. Project Structure
+## Repository Structure
 
-The project will initially contain one main Django application.
-
-django-blog/
-│
+```text
+blogapp/
 ├── manage.py
-│
 ├── config/
-│   ├── settings.py
-│   ├── urls.py
-│   ├── asgi.py
-│   └── wsgi.py
-│
+│   ├── settings.py       Project configuration and installed apps
+│   ├── urls.py           Root URL configuration
+│   ├── asgi.py           ASGI entry point
+│   └── wsgi.py           WSGI entry point
 ├── blog/
-│   ├── models.py
-│   ├── views.py
-│   ├── forms.py
-│   ├── urls.py
-│   ├── admin.py
-│   └── ...
-│
-├── templates/
-│
-├── static/
-│
-├── docs/
-│   ├── requirements.md
-│   └── architecture.md
-│
-└── db.sqlite3
+│   ├── models.py         Post, Category, and Tag
+│   ├── forms.py          Signup and post forms
+│   ├── views.py          Public browsing, auth, and post CRUD
+│   ├── urls.py           Application routes
+│   ├── admin.py          Admin registrations
+│   └── migrations/       Versioned database schema
+├── templates/            Django templates grouped by feature
+├── static/css/           Shared application stylesheet
+└── docs/                 Requirements, architecture, and plan
+```
 
----
+Local visual references under `docs/design/`, `figma/`, and `figma-designs/` are excluded from version control. The runtime uses `templates/` and `static/css/style.css`.
 
-## 4. Django Application
+## Responsibilities
 
-The `blog` application will contain the core blog functionality.
+### `config`
 
-Responsibilities include:
+The project configuration registers Django's built-in apps and the `blog` app, configures the SQLite database, exposes the project template directory, and includes the application URL configuration at the site root.
 
-- Blog post management
-- Categories
-- Tags
-- Post forms
-- Post views
-- Post URLs
-- Post ownership checks
-- Blog-related templates
+### `blog.models`
 
-Django's built-in authentication system will be used for users,
-authentication, sessions, and password management.
+The data model uses Django's built-in user model:
 
----
+```text
+User 1 ---- * Post
+Category 1 ---- * Post
+Post * ---- * Tag
+```
 
-## 5. Data Model
+`Post.author` is required and cascades when a user is deleted. `Post.category` is optional and is set to `NULL` if its category is removed. Tags are optional and use a many-to-many relationship.
 
-### User
+### `blog.forms`
 
-Django's built-in User model will be used.
+`SignUpForm` extends Django's `UserCreationForm`. `PostForm` exposes only post content fields; the author is never accepted from the browser and is assigned in `PostCreateView` from `request.user`.
 
-A user can own multiple posts.
+### `blog.views`
 
-Relationship:
+- `PublishedPostListView` returns published posts and applies search, category/tag filtering, sorting, and pagination.
+- `PublishedPostDetailView` can resolve only published posts.
+- `MyPostsView` returns only posts owned by the authenticated user.
+- `PostCreateView` requires authentication and assigns ownership server-side.
+- `OwnedPostMixin` scopes update and delete querysets to the authenticated owner.
+- `UserLoginView`, `UserLogoutView`, and `SignUpView` use Django authentication primitives.
 
-User 1 ──── * Post
+### Templates and static files
 
----
+Templates are grouped into shared layout, registration, and blog pages. `templates/base.html` owns the shared navigation and loads `static/css/style.css`. The visual design is a functional responsive interpretation of the supplied reference material.
 
-### Post
+## Request and Authorization Flow
 
-A post contains:
+Public list and detail views always start from `published=True`, so drafts cannot leak through search, filters, pagination, or direct URLs. Authenticated views use `LoginRequiredMixin`. Mutation views use the current user's identity from the request, and `OwnedPostMixin` narrows the update/delete queryset before Django resolves the object. A missing or foreign object therefore receives Django's normal not-found response rather than being modified.
 
-- title
-- content
-- author
-- category
-- created_at
-- updated_at
-- published
+Logout is a POST action protected by Django's CSRF middleware. Password storage and sessions are handled by Django's authentication system.
 
-The author relationship identifies the owner of the post.
+## Database and Migrations
 
----
+SQLite is the development database. Every schema change must be represented by a migration in `blog/migrations/`. The database file is local and ignored by Git. Use `makemigrations`, review the generated migration, then run `migrate`; never edit the SQLite file manually.
 
-### Category
+## Operational Conventions
 
-A category contains:
+- Keep domain behavior in the `blog` app and use Django's built-in APIs first.
+- Keep authorization server-side; template visibility is only a usability concern.
+- Keep the dependency list minimal.
+- Use the project README for setup and manual verification.
+- Add automated tests as behavior grows, especially for ownership and public draft isolation.
 
-- name
+## Current State
 
-A category can contain multiple posts.
-
-Relationship:
-
-Category 1 ──── * Post
-
----
-
-### Tag
-
-A tag contains:
-
-- name
-
-A post can have multiple tags, and a tag can belong to multiple posts.
-
-Relationship:
-
-Post * ──── * Tag
-
----
-
-## 6. Authentication
-
-Django's built-in authentication system will handle:
-
-- Registration
-- Login
-- Logout
-- Password hashing
-- User sessions
-
-Authenticated requests will expose the current user through Django's
-request authentication system.
-
----
-
-## 7. Authorization
-
-Authentication and authorization are separate concerns.
-
-Authentication answers:
-
-"Who is this user?"
-
-Authorization answers:
-
-"Is this user allowed to perform this action?"
-
-For post modification:
-
-- An authenticated user may create a post.
-- Only the post owner may edit the post.
-- Only the post owner may delete the post.
-
-These rules must be enforced on the server.
-
-Hiding buttons in the frontend is not considered sufficient authorization.
-
----
-
-## 8. Views
-
-The application will provide views for:
-
-- Public post list
-- Post detail
-- User dashboard
-- Create post
-- Edit post
-- Delete post
-- Authentication pages
-
-Django's generic class-based views may be used where they simplify
-standard CRUD operations.
-
----
-
-## 9. Forms
-
-Django Forms / ModelForms will be used for model-backed user input.
-
-The initial post form will handle:
-
-- title
-- category
-- content
-- published status
-
-Validation will be performed server-side.
-
----
-
-## 10. Database
-
-SQLite will be used during development.
-
-Database schema changes will be managed exclusively through Django
-migrations.
-
-The database will not be manually modified.
-
----
-
-## 11. Frontend
-
-The frontend implementation is intentionally postponed until the
-provided Figma design has been reviewed.
-
-Once the design is available, templates, CSS, and any required
-JavaScript will be implemented according to the design.
-
----
-
-## 12. Architecture Principles
-
-The project should follow these principles:
-
-1. Keep the architecture simple.
-2. Use Django's built-in functionality where appropriate.
-3. Use the Django ORM instead of manually writing SQL for normal
-   application operations.
-4. Keep authentication and authorization separate.
-5. Enforce permissions on the server.
-6. Avoid unnecessary dependencies.
-7. Make small, testable changes.
-8. Do not introduce technologies that are not required by the project.
-9. Keep documentation synchronized with significant architectural
-   decisions.
+The backend foundation, authentication, post CRUD, ownership enforcement, public discovery features, dashboard, templates, and responsive styling are implemented. The remaining quality gap is automated test coverage; deployment hardening and a production database are intentionally outside the current scope.

@@ -1,7 +1,6 @@
 from django.urls import path
 
 from .views import (
-    AuthenticationStatusView,
     MyPostsView,
     PostCreateView,
     PostDeleteView,
@@ -16,7 +15,6 @@ from .views import (
 
 urlpatterns = [
     path('', PublishedPostListView.as_view(), name='post-list'),
-    path('auth/status/', AuthenticationStatusView.as_view(), name='authentication-status'),
     path('my-posts/', MyPostsView.as_view(), name='my-posts'),
     path('accounts/signup/', SignUpView.as_view(), name='signup'),
     path('accounts/login/', UserLoginView.as_view(), name='login'),

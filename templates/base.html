@@ -5,35 +5,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}TheBlog{% endblock %} | TheBlog</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
-<body>
-    <header class="site-header">
-        <div class="shell header-inner">
-            <a class="brand" href="{% url 'post-list' %}">TheBlog</a>
-            <nav class="site-nav" aria-label="Main navigation">
-                <a href="{% url 'post-list' %}">Posts</a>
+<body class="{% block body_class %}{% endblock %}">
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="{% url 'post-list' %}">TheBlog</a>
+      <nav class="nav">
+        <a href="{% url 'post-list' %}" class="{% if request.resolver_match.url_name == 'post-list' %}is-active{% endif %}">Posts</a>
                 {% if user.is_authenticated %}
-                    <a href="{% url 'my-posts' %}">My posts</a>
-                    <a class="nav-cta" href="{% url 'post-create' %}">New post <span aria-hidden="true">+</span></a>
-                    <form class="logout-form" method="post" action="{% url 'logout' %}">
-                        {% csrf_token %}
-                        <button class="nav-logout" type="submit">Log out</button>
-                    </form>
-                {% else %}
-                    <a href="{% url 'login' %}">Log in</a>
-                    <a class="nav-cta" href="{% url 'signup' %}">Create account</a>
+        <a href="{% url 'my-posts' %}" class="{% if request.resolver_match.url_name == 'my-posts' %}is-active{% endif %}">My posts</a>
                 {% endif %}
-            </nav>
-        </div>
-    </header>
-
-    <main class="page-shell">
-        {% block content %}{% endblock %}
-    </main>
-
-    <footer class="site-footer">
-        <div class="shell">TheBlog &middot; Ideas worth sharing.</div>
-    </footer>
+      </nav>
+      <div class="header-actions">
+                {% if user.is_authenticated %}
+          <a class="btn btn--primary" href="{% url 'post-create' %}">New post</a>
+          <form class="user-pill" method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <span class="avatar">{{ user.get_full_name|default:user.username|slice:":2"|upper }}</span>
+            <button type="submit">Log out</button>
+          </form>
+                {% else %}
+          <a class="link" href="{% url 'login' %}">Log in</a>
+          <a class="btn btn--primary" href="{% url 'signup' %}">Sign up</a>
+                {% endif %}
+      </div>
+    </div>
+  </header>
+  {% block content %}{% endblock %}
 </body>
 </html>

@@ -3,7 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from .forms import PostForm, SignUpForm
 from .models import Category, Post, Tag
@@ -13,10 +13,6 @@ class SignUpView(CreateView):
     form_class = SignUpForm
     template_name = 'registration/signup.html'
     success_url = reverse_lazy('login')
-
-
-class AuthenticationStatusView(TemplateView):
-    template_name = 'authentication/status.html'
 
 
 class PublishedPostListView(ListView):
@@ -41,10 +37,13 @@ class PublishedPostListView(ListView):
         if tag_id.isdigit():
             queryset = queryset.filter(tags__id=int(tag_id))
 
+        sort = self.request.GET.get('sort', 'newest')
+        ordering = ('created_at', 'updated_at') if sort == 'oldest' else self.ordering
+
         return (
             queryset.select_related('author', 'category')
             .prefetch_related('tags')
-            .order_by(*self.ordering)
+            .order_by(*ordering)
             .distinct()
         )
 
@@ -77,6 +76,11 @@ class MyPostsView(LoginRequiredMixin, ListView):
             .prefetch_related('tags')
             .order_by(*self.ordering)
         )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['draft_count'] = self.get_queryset().filter(published=False).count()
+        return context
 
 
 class PublishedPostDetailView(DetailView):

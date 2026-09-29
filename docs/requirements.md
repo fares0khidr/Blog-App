@@ -115,9 +115,7 @@ Core entities:
 
 ## 10. Frontend
 
-The frontend will implement the provided Figma design.
-
-Frontend implementation will be handled after the backend foundation is complete.
+The frontend is implemented with server-rendered Django templates and plain CSS as a functional responsive interpretation of the provided Figma design.
 
 ---
 

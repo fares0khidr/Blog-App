@@ -13,7 +13,7 @@ The project uses:
 * Django Authentication
 * SQLite during development
 
-The frontend implementation is intentionally postponed until the provided Figma design is available and reviewed.
+The frontend uses server-rendered Django templates and plain CSS based on the provided Figma design.
 
 ---
 
@@ -160,13 +160,7 @@ Do not modify unrelated files while implementing a focused feature.
 
 ## Templates and Frontend
 
-The frontend must eventually follow the provided Figma design.
-
-Until the Figma implementation phase begins:
-
-* prioritize backend functionality
-* avoid spending significant time on visual styling
-* do not invent a frontend design unnecessarily
+The frontend implementation lives in `templates/` and `static/css/style.css`. Preserve the existing responsive design and use the provided Figma references when making visual changes.
 
 ---
 
